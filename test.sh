@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cd /opt/ffmpeg_build
 echo "::group:: Prepare ffmpeg dependencies"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
