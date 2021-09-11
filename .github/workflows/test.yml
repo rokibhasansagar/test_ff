@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Pre
         run: |
-          brew update && brew install bash libtool yasm make cmake mercurial
+          brew update && brew install bash libtool yasm make cmake mercurial ninja
       - name: script
         run: |
           curl -sL https://github.com/rokibhasansagar/test_ff/raw/main/test.sh | bash
