@@ -31,14 +31,19 @@ echo "::endgroup::"
 
 cd /opt/ffmpeg_build
 echo "::group:: Prepare ffmpeg dependencies"
-sudo apt-fast -qqy install \
-  build-essential cmake m4 libtool make automake curl ca-certificates libva-dev libvdpau-dev libmfx-dev libnuma-dev libdrm-dev \
-  intel-microcode intel-gpu-tools intel-opencl-icd intel-media-va-driver ocl-icd-opencl-dev opencl-headers \
-  libwayland-dev mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers mesa-utils mesa-utils-extra \
-  libglx-dev libgl1-mesa-glx libgl1-mesa-dev ninja-build yasm nasm xmlto asciidoc yasm nasm
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  brew install mercurial nasm yasm cmake || true
+else
+  sudo apt-fast -qqy install \
+    build-essential cmake m4 libtool make automake curl ca-certificates libva-dev libvdpau-dev libmfx-dev libnuma-dev libdrm-dev \
+    intel-microcode intel-gpu-tools intel-opencl-icd intel-media-va-driver ocl-icd-opencl-dev opencl-headers \
+    libwayland-dev mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers mesa-utils mesa-utils-extra \
+    libglx-dev libgl1-mesa-glx libgl1-mesa-dev ninja-build yasm nasm xmlto asciidoc yasm nasm
+fi
+
 sudo -EH pip3 install meson
 echo "::endgroup::"
-
 echo "::group:: Test Build Partial Codec"
 
 VERSION=1.28.1
