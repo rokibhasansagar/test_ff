@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo "::group:: Prepare ffmpeg dependencies"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  brew update && brew install mercurial nasm yasm cmake make bash coreutils libtool
+  echo
 else
   sudo apt-fast update -qqy
   sudo apt-fast -qqy install \
@@ -12,9 +12,9 @@ else
     libwayland-dev mesa-va-drivers mesa-vdpau-drivers mesa-vulkan-drivers mesa-utils mesa-utils-extra \
     libglx-dev libgl1-mesa-glx libgl1-mesa-dev ninja-build yasm nasm xmlto asciidoc yasm nasm
 fi
-
 sudo -EH pip3 install meson
 echo "::endgroup::"
+
 echo "::group:: Test Build Partial Codec"
 
 VERSION=1.28.1
@@ -65,7 +65,6 @@ remove_dir() {
 }
 
 download() {
-  # download url [filename[dirname]]
 
   DOWNLOAD_PATH="$PACKAGES"
   DOWNLOAD_FILE="${2:-"${1##*/}"}"
@@ -211,10 +210,7 @@ echo "ffmpeg-build-script v$VERSION"
 echo "============================="
 echo ""
 
-bflag='-b'
-
-LDEXEFLAGS="-static"
-
+[[ "$OSTYPE" == "darwin"* ]] || LDEXEFLAGS="-static"
 
 echo "Using $MJOBS make jobs simultaneously."
 
