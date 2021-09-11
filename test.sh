@@ -224,6 +224,7 @@ fi
 
 mkdir -p "$PACKAGES"
 mkdir -p "$WORKSPACE"
+mkdir -p "${WORKSPACE}/lib/pkgconfig"
 
 export PATH="${WORKSPACE}/bin:$PATH"
 PKG_CONFIG_PATH="/usr/local/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig"
@@ -246,9 +247,9 @@ if command_exists "meson"; then
     execute ninja -C build
     execute ninja -C build install
     ls -lA build/*
-    find "${WORKSPACE}"/ -type f -name "dav1d.pc" 2>/dev/null
-    cp "${WORKSPACE}/lib/x86_64-linux-gnu/pkgconfig/dav1d.pc" "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || true
-    cp ${WORKSPACE}/lib/*/pkgconfig/dav1d.pc "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || true
+    find "${WORKSPACE}" -type f -name "dav1d.pc" 2>/dev/null || echo "dav1d.pc not found anywhere"
+    cat "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || echo " default dav1d.pc not found"
+    cp build/meson-private/dav1d.pc "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || true
     du -sh "${WORKSPACE}"/bin/dav1d
  fi
   if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -277,13 +278,14 @@ if build "x265"; then
   mv libx265.a libx265_main.a
   du -sh ../12bit/lib* ../10bit/lib* lib*
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    execute libtool -static -o libx265.a libx265_main.a libx265_main10.a libx265_main12.a 2>/dev/null
+    execute libtool -static -o libx265.a libx265_main.a libx265_main10.a libx265_main12.a libhdr10plus.a 2>/dev/null
   else
     execute ar -M <<EOF
 CREATE libx265.a
 ADDLIB libx265_main.a
 ADDLIB libx265_main10.a
 ADDLIB libx265_main12.a
+ADDLIB libhdr10plus.a
 SAVE
 END
 EOF
@@ -307,3 +309,4 @@ fi
 
 echo "::endgroup::"
 
+ls -lAog ${WORKSPACE}/lib/pkgconfig/
