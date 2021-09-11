@@ -1,40 +1,12 @@
 #!/bin/bash
 
-# Set Working Dir
-sudo mkdir -p /opt/ffmpeg_build
-sudo chmod 777 /opt/ffmpeg_build -R
-sudo chown runner:docker /opt/ffmpeg_build -R
-
-# Update Apt-cache
-sudo apt-fast update -qqy
-
-echo "::group:: Change GCC Version to 10"
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 90
-sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-10 100
-sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-9 90
-sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-10 100
-sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-9 90
-sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-10 100
-sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-9 90
-sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-10 100
-sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-9 90
-sudo update-alternatives --install /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-10 100
-sudo update-alternatives --install /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-9 90
-sudo update-alternatives --install /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-10 100
-sudo update-alternatives --install /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-9 90
-sudo update-alternatives --install /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-10 100
-sudo update-alternatives --install /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-9 90
-echo "::endgroup::"
-
 cd /opt/ffmpeg_build
 echo "::group:: Prepare ffmpeg dependencies"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  brew install mercurial nasm yasm cmake || true
+  brew update && brew install mercurial nasm yasm cmake make bash coreutils libtool
 else
+  sudo apt-fast update -qqy
   sudo apt-fast -qqy install \
     build-essential cmake m4 libtool make automake curl ca-certificates libva-dev libvdpau-dev libmfx-dev libnuma-dev libdrm-dev \
     intel-microcode intel-gpu-tools intel-opencl-icd intel-media-va-driver ocl-icd-opencl-dev opencl-headers \
@@ -56,7 +28,7 @@ LDEXEFLAGS=""
 EXTRALIBS="-ldl -lpthread -lm -lz"
 MACOS_M1=false
 CONFIGURE_OPTIONS=()
-NONFREE_AND_GPL=false
+NONFREE_AND_GPL=true
 
 # Check for Apple Silicon
 if [[ ("$(uname -m)" == "arm64") && ("$OSTYPE" == "darwin"*) ]]; then
@@ -68,7 +40,6 @@ fi
 
 # Speed up the process
 # Env Var NUMJOBS overrides automatic detection
-NUMJOBS=8
 if [[ -n "$NUMJOBS" ]]; then
   MJOBS="$NUMJOBS"
 elif [[ -f /proc/cpuinfo ]]; then
