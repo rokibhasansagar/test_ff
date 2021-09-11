@@ -245,12 +245,17 @@ if command_exists "meson"; then
     execute meson build --prefix="${WORKSPACE}" --buildtype=release --default-library=static
     execute ninja -C build
     execute ninja -C build install
-    ls -lA lib* dav1d
+    ls -lA build/*
     find "${WORKSPACE}"/ -type f -name "dav1d.pc" 2>/dev/null
     cp "${WORKSPACE}/lib/x86_64-linux-gnu/pkgconfig/dav1d.pc" "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || true
     cp ${WORKSPACE}/lib/*/pkgconfig/dav1d.pc "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || true
+    du -sh "${WORKSPACE}"/bin/dav1d
  fi
-  CONFIGURE_OPTIONS+=("--enable-libdav1d")
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    otool -L "${WORKSPACE}"/bin/dav1d
+  else
+    ldd "${WORKSPACE}"/bin/dav1d
+  fi
 fi
 
 if build "x265"; then
@@ -270,7 +275,7 @@ if build "x265"; then
   execute cmake -DCMAKE_INSTALL_PREFIX="${WORKSPACE}" -DCMAKE_BUILD_TYPE=Release -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DEXTRA_LIB="x265_main10.a;x265_main12.a;libhdr10plus.a;-ldl" -DEXTRA_LINK_FLAGS=-L. -DLINKED_10BIT=ON -DLINKED_12BIT=ON ../../../source
   execute make -j $MJOBS
   mv libx265.a libx265_main.a
-  ls -lA ../12bit/lib* ../10bit/lib* lib*
+  du -sh ../12bit/lib* ../10bit/lib* lib*
   if [[ "$OSTYPE" == "darwin"* ]]; then
     execute libtool -static -o libx265.a libx265_main.a libx265_main10.a libx265_main12.a 2>/dev/null
   else
@@ -283,7 +288,7 @@ SAVE
 END
 EOF
   fi
-  ls -lA lib* x265
+  du -sh lib* x265
   
   execute make install
   ls -lA "${WORKSPACE}"/bin/x265
