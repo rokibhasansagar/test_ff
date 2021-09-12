@@ -2,9 +2,7 @@
 
 echo "::group:: Prepare ffmpeg dependencies"
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  echo
-else
+if ! [[ "$OSTYPE" == "darwin"* ]]; then
   sudo apt-fast update -qqy
   sudo apt-fast -qqy install \
     build-essential cmake m4 libtool make automake curl ca-certificates libva-dev libvdpau-dev libmfx-dev libnuma-dev libdrm-dev \
@@ -278,8 +276,8 @@ CONFIGURE_OPTIONS+=("--enable-libzimg")
 echo "::endgroup::"
 
 cat ${WORKSPACE}/lib/pkgconfig/*.pc
-echo
-sudo ldconfig -v || true
+
+[[ "$OSTYPE" == "darwin"* ]] || sudo ldconfig -v
 
 echo "::group:: Main Work"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -309,5 +307,18 @@ download "https://github.com/FFmpeg/FFmpeg/archive/refs/heads/release/4.4.tar.gz
 execute make -j $MJOBS
 execute make install
 
-ldd $WORKSPACE/bin/ffmpeg
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  otool -L $WORKSPACE/bin/ffmpeg
+else
+  ldd $WORKSPACE/bin/ffmpeg
+fi
+
+tree -h $WORKSPACE || true
+
+echo
+
+$WORKSPACE/bin/ffmpeg -hide_banner -buildconf
+$WORKSPACE/bin/ffmpeg -hide_banner -decoders
+$WORKSPACE/bin/ffmpeg -hide_banner -encoders
+
 echo "::endgroup::"
