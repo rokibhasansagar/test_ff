@@ -243,11 +243,14 @@ if command_exists "meson"; then
   if build "dav1d"; then
     download "https://code.videolan.org/videolan/dav1d/-/archive/0.9.2/dav1d-0.9.2.tar.gz"
     make_dir build
-    execute meson build --prefix="${WORKSPACE}" --buildtype=release --default-library=static
+    execute meson build --prefix="${WORKSPACE}" --buildtype=release --default-library=static --libdir="${WORKSPACE}"/lib
     execute ninja -C build
     execute ninja -C build install
+    { echo; cat "${WORKSPACE}"/lib/pkgconfig/dav1d.pc; echo; } || true
     cp -f build/meson-private/dav1d.pc "${WORKSPACE}"/lib/pkgconfig/dav1d.pc 2>/dev/null
- fi
+    build_done "dav1d"
+    ldd "${WORKSPACE}"/bin/dav1d 2>/dev/null || otool -L "${WORKSPACE}"/bin/dav1d 2>/dev/null
+  fi
 fi
 
 if build "x265"; then
@@ -283,12 +286,11 @@ EOF
   ls -lAog lib* x265
   
   execute make install
-
   if [ -n "$LDEXEFLAGS" ]; then
     sed -i.backup 's/-lgcc_s/-lgcc_eh/g' "${WORKSPACE}/lib/pkgconfig/x265.pc" # The -i.backup is intended and required on MacOS: https://stackoverflow.com/questions/5694228/sed-in-place-flag-that-works-both-on-mac-bsd-and-linux
   fi
-
   build_done "x265"
+  ldd "${WORKSPACE}"/bin/x265 2>/dev/null || otool -L "${WORKSPACE}"/bin/x265 2>/dev/null
 fi
 
 echo "::endgroup::"
