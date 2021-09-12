@@ -278,7 +278,7 @@ echo "::endgroup::"
 
 cat ${WORKSPACE}/lib/pkgconfig/*.pc
 
-[[ "$OSTYPE" == "darwin"* ]] || sudo ldconfig -v
+# [[ "$OSTYPE" == "darwin"* ]] || sudo ldconfig -v
 
 echo "::group:: Main Work"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
