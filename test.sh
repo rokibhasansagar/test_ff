@@ -260,7 +260,7 @@ if build "zimg"; then
   cd zimg || exit
   execute libtoolize -i -f -q
   execute ./autogen.sh --prefix="${WORKSPACE}"
-  execute ./configure --prefix="${WORKSPACE}" --enable-static #--disable-shared
+  execute ./configure --prefix="${WORKSPACE}" --enable-static --disable-shared
   execute make -j $MJOBS
   execute make install
   build_done "zimg"
@@ -270,7 +270,10 @@ CONFIGURE_OPTIONS+=("--enable-libzimg")
 echo "::endgroup::"
 
 cat ${WORKSPACE}/lib/pkgconfig/*.pc
+echo
+sudo ldconfig -v
 
+echo "::group:: Main Work"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
   CONFIGURE_OPTIONS+=("--enable-pic" "--enable-lto" "--enable-stripping" "--disable-large-tests")
 fi
@@ -299,3 +302,4 @@ execute make -j $MJOBS
 execute make install
 
 ldd $WORKSPACE/bin/ffmpeg
+echo "::endgroup::"
