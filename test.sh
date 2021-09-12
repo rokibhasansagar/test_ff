@@ -260,6 +260,7 @@ if command_exists "meson"; then
     ldd "${WORKSPACE}"/bin/dav1d 2>/dev/null || otool -L "${WORKSPACE}"/bin/dav1d 2>/dev/null
   fi
 fi
+CONFIGURE_OPTIONS+=("--enable-libdav1d")
 
 if build "zimg"; then
   execute git clone https://github.com/sekrit-twc/zimg.git -b release-3.0.3
@@ -313,7 +314,7 @@ else
   ldd $WORKSPACE/bin/ffmpeg
 fi
 
-tree -h $WORKSPACE || true
+[[ "$OSTYPE" == "darwin"* ]] || tree -h $WORKSPACE
 
 echo
 
