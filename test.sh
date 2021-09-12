@@ -46,6 +46,7 @@ elif [[ -f /proc/cpuinfo ]]; then
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   MJOBS=$(sysctl -n machdep.cpu.thread_count)
   CONFIGURE_OPTIONS=("--enable-videotoolbox")
+  MACOS_LIBTOOL="$(which libtool)" # gnu libtool is installed in this script and need to avoid name conflict
 else
   MJOBS=4
 fi
@@ -240,6 +241,13 @@ if build "pkg-config"; then
   execute make install
   build_done "pkg-config"
 fi
+if build "libtool"; then
+  download "https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
+  execute ./configure --prefix="${WORKSPACE}" --enable-static --disable-shared
+  execute make -j $MJOBS
+  execute make install
+  build_done "libtool"
+fi
 
 if command_exists "meson"; then
   if build "dav1d"; then
@@ -258,7 +266,7 @@ fi
 if build "zimg"; then
   execute git clone https://github.com/sekrit-twc/zimg.git -b release-3.0.3
   cd zimg || exit
-  execute libtoolize -i -f -q
+  execute "${WORKSPACE}/bin/libtoolize" -i -f -q
   execute ./autogen.sh --prefix="${WORKSPACE}"
   execute ./configure --prefix="${WORKSPACE}" --enable-static --disable-shared
   execute make -j $MJOBS
@@ -271,7 +279,7 @@ echo "::endgroup::"
 
 cat ${WORKSPACE}/lib/pkgconfig/*.pc
 echo
-sudo ldconfig -v
+sudo ldconfig -v || true
 
 echo "::group:: Main Work"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
