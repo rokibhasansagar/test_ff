@@ -253,46 +253,47 @@ if command_exists "meson"; then
   fi
 fi
 
-if build "x265"; then
-  execute hg clone http://hg.videolan.org/x265 ${PACKAGES}/x265
-  cd ${PACKAGES}/x265/build/linux || exit
-  mkdir -p 8bit 10bit 12bit
-  cd 12bit
-  execute cmake -DCMAKE_INSTALL_PREFIX="${WORKSPACE}" -DCMAKE_BUILD_TYPE=Release -DHIGH_BIT_DEPTH=ON -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF  -DENABLE_CLI=OFF -DMAIN12=ON -DENABLE_HDR10_PLUS=ON ../../../source
+if build "zimg"; then
+  execute git clone https://github.com/sekrit-twc/zimg.git -b release-3.0.3
+  cd zimg || exit
+  execute libtoolize -i -f -q
+  execute ./autogen.sh --prefix="${WORKSPACE}"
+  execute ./configure --prefix="${WORKSPACE}" --enable-static #--disable-shared
   execute make -j $MJOBS
-  cd ../10bit
-  execute cmake -DCMAKE_INSTALL_PREFIX="${WORKSPACE}" -DCMAKE_BUILD_TYPE=Release -DHIGH_BIT_DEPTH=ON -DEXPORT_C_API=OFF -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF  -DENABLE_CLI=OFF ../../../source
-  execute make -j $MJOBS
-  cd ../8bit
-  ln -sf ../10bit/libx265.a libx265_main10.a
-  ln -sf ../12bit/libx265.a libx265_main12.a
-  ln -sf ../12bit/libhdr10plus.a libhdr10plus.a
-  execute cmake -DCMAKE_INSTALL_PREFIX="${WORKSPACE}" -DCMAKE_BUILD_TYPE=Release -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DEXTRA_LIB="x265_main10.a;x265_main12.a;libhdr10plus.a;-ldl" -DEXTRA_LINK_FLAGS=-L. -DLINKED_10BIT=ON -DLINKED_12BIT=ON ../../../source
-  execute make -j $MJOBS
-  mv libx265.a libx265_main.a
-  ls -lAog ../12bit/lib* ../10bit/lib* lib*
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    execute libtool -static -o libx265.a libx265_main.a libx265_main10.a libx265_main12.a 2>/dev/null
-  else
-    execute ar -M <<EOF
-CREATE libx265.a
-ADDLIB libx265_main.a
-ADDLIB libx265_main10.a
-ADDLIB libx265_main12.a
-SAVE
-END
-EOF
-  fi
-  ls -lAog lib* x265
-  
   execute make install
-  if [ -n "$LDEXEFLAGS" ]; then
-    sed -i.backup 's/-lgcc_s/-lgcc_eh/g' "${WORKSPACE}/lib/pkgconfig/x265.pc" # The -i.backup is intended and required on MacOS: https://stackoverflow.com/questions/5694228/sed-in-place-flag-that-works-both-on-mac-bsd-and-linux
-  fi
-  build_done "x265"
-  ldd "${WORKSPACE}"/bin/x265 2>/dev/null || otool -L "${WORKSPACE}"/bin/x265 2>/dev/null
+  build_done "zimg"
 fi
+CONFIGURE_OPTIONS+=("--enable-libzimg")
 
 echo "::endgroup::"
 
 cat ${WORKSPACE}/lib/pkgconfig/*.pc
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+  CONFIGURE_OPTIONS+=("--enable-pic" "--enable-lto" "--enable-stripping" "--disable-large-tests")
+fi
+
+build "ffmpeg"
+# use latest commit from top of version head, not the tagged one
+# https://git.ffmpeg.org/gitweb/ffmpeg.git/shortlog/refs/heads/release/4.4
+download "https://github.com/FFmpeg/FFmpeg/archive/refs/heads/release/4.4.tar.gz" "FFmpeg-release-4.4.tar.gz"
+# shellcheck disable=SC2086
+./configure "${CONFIGURE_OPTIONS[@]}" \
+  --disable-debug \
+  --disable-doc \
+  --disable-shared --enable-static \
+  --enable-pthreads \
+  --enable-small \
+  --enable-version3 \
+  --extra-cflags="${CFLAGS}" \
+  --extra-ldexeflags="${LDEXEFLAGS}" \
+  --extra-ldflags="${LDFLAGS}" \
+  --extra-libs="${EXTRALIBS}" \
+  --pkgconfigdir="$WORKSPACE/lib/pkgconfig" \
+  --pkg-config-flags="--static" \
+  --prefix="${WORKSPACE}"
+
+execute make -j $MJOBS
+execute make install
+
+ldd $WORKSPACE/bin/ffmpeg
