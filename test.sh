@@ -50,6 +50,8 @@ else
   MJOBS=4
 fi
 
+MJOBS=$((MJOBS * 2))
+
 make_dir() {
   remove_dir "$1"
   if ! mkdir "$1"; then
