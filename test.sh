@@ -246,17 +246,8 @@ if command_exists "meson"; then
     execute meson build --prefix="${WORKSPACE}" --buildtype=release --default-library=static
     execute ninja -C build
     execute ninja -C build install
-    ls -lA build/*
-    find "${WORKSPACE}" -type f -name "dav1d.pc" 2>/dev/null || echo "dav1d.pc not found anywhere"
-    cat "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || echo " default dav1d.pc not found"
-    cp build/meson-private/dav1d.pc "${WORKSPACE}/lib/pkgconfig/dav1d.pc" || true
-    du -sh "${WORKSPACE}"/bin/dav1d
+    cp -f build/meson-private/dav1d.pc "${WORKSPACE}"/lib/pkgconfig/dav1d.pc 2>/dev/null
  fi
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    otool -L "${WORKSPACE}"/bin/dav1d
-  else
-    ldd "${WORKSPACE}"/bin/dav1d
-  fi
 fi
 
 if build "x265"; then
@@ -276,7 +267,7 @@ if build "x265"; then
   execute cmake -DCMAKE_INSTALL_PREFIX="${WORKSPACE}" -DCMAKE_BUILD_TYPE=Release -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DEXTRA_LIB="x265_main10.a;x265_main12.a;libhdr10plus.a;-ldl" -DEXTRA_LINK_FLAGS=-L. -DLINKED_10BIT=ON -DLINKED_12BIT=ON ../../../source
   execute make -j $MJOBS
   mv libx265.a libx265_main.a
-  du -sh ../12bit/lib* ../10bit/lib* lib*
+  ls -lAog ../12bit/lib* ../10bit/lib* lib*
   if [[ "$OSTYPE" == "darwin"* ]]; then
     execute libtool -static -o libx265.a libx265_main.a libx265_main10.a libx265_main12.a libhdr10plus.a 2>/dev/null
   else
@@ -290,15 +281,9 @@ SAVE
 END
 EOF
   fi
-  du -sh lib* x265
+  ls -lAog lib* x265
   
   execute make install
-  ls -lA "${WORKSPACE}"/bin/x265
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    otool -L "${WORKSPACE}"/bin/x265
-  else
-    ldd "${WORKSPACE}"/bin/x265
-  fi
 
   if [ -n "$LDEXEFLAGS" ]; then
     sed -i.backup 's/-lgcc_s/-lgcc_eh/g' "${WORKSPACE}/lib/pkgconfig/x265.pc" # The -i.backup is intended and required on MacOS: https://stackoverflow.com/questions/5694228/sed-in-place-flag-that-works-both-on-mac-bsd-and-linux
@@ -309,4 +294,4 @@ fi
 
 echo "::endgroup::"
 
-ls -lAog ${WORKSPACE}/lib/pkgconfig/
+cat ${WORKSPACE}/lib/pkgconfig/*.pc
