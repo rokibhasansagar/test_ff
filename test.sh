@@ -269,14 +269,13 @@ if build "x265"; then
   mv libx265.a libx265_main.a
   ls -lAog ../12bit/lib* ../10bit/lib* lib*
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    execute libtool -static -o libx265.a libx265_main.a libx265_main10.a libx265_main12.a libhdr10plus.a 2>/dev/null
+    execute libtool -static -o libx265.a libx265_main.a libx265_main10.a libx265_main12.a 2>/dev/null
   else
     execute ar -M <<EOF
 CREATE libx265.a
 ADDLIB libx265_main.a
 ADDLIB libx265_main10.a
 ADDLIB libx265_main12.a
-ADDLIB libhdr10plus.a
 SAVE
 END
 EOF
